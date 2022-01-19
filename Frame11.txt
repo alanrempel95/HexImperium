@@ -1,0 +1,2008 @@
+_global.rnd_seed = Math.floor(Math.random() * 10000);
+_global.rand = function(n)
+{
+   rnd_seed = (rnd_seed * 9301 + 49297) % 233280;
+   return Math.floor(rnd_seed / 233280 * n);
+};
+_global.setSeed = function(sd)
+{
+   rnd_seed = sd;
+};
+_global.shuffle = function(a)
+{
+   var _loc2_ = 0;
+   while(_loc2_ < a.length)
+   {
+      tmp = a[_loc2_];
+      rn = rand(a.length);
+      a[_loc2_] = a[rn];
+      a[rn] = tmp;
+      _loc2_ = _loc2_ + 1;
+   }
+};
+_global.degToRad = function(deg)
+{
+   return 6.283185307179586 * (deg / 360);
+};
+_global.remChar = function(string, index)
+{
+   return string.slice(0,index) + string.slice(index + 1,string.length);
+};
+_global.numOnly = function(input)
+{
+   var _loc1_ = 0;
+   while(_loc1_ < input.text.length)
+   {
+      var _loc3_ = input.text.charCodeAt(_loc1_);
+      if(_loc3_ < 48 || _loc3_ > 57)
+      {
+         input.text = remChar(input.text,_loc1_);
+      }
+      _loc1_ = _loc1_ + 1;
+   }
+};
+_global.pasteBitmap = function(px, py, bmp, target, merge_alpha)
+{
+   if(merge_alpha == undefined)
+   {
+      merge_alpha = true;
+   }
+   target.copyPixels(bmp,bmp.rectangle,new flash.geom.Point(px,py),null,null,merge_alpha);
+};
+_global.flipBitmap = function(bmp, h, v)
+{
+   var _loc4_ = new flash.geom.Matrix();
+   _loc4_.scale(1,-1);
+   _loc4_.translate(0,bmp.height);
+   var _loc3_ = new flash.geom.Matrix();
+   _loc3_.scale(-1,1);
+   _loc3_.translate(bmp.width,0);
+   var _loc2_ = new flash.geom.Matrix();
+   _loc2_.scale(-1,-1);
+   _loc2_.translate(bmp.width,bmp.height);
+   if(h && v)
+   {
+      var _loc6_ = _loc2_;
+   }
+   else if(h)
+   {
+      _loc6_ = _loc3_;
+   }
+   else if(v)
+   {
+      _loc6_ = _loc4_;
+   }
+   else
+   {
+      return bmp;
+   }
+   var _loc5_ = new flash.display.BitmapData(bmp.width,bmp.height,true,0);
+   _loc5_.draw(bmp,_loc6_);
+   return _loc5_;
+};
+_global.rotateBitmap = function(bmp, deg)
+{
+   var _loc2_ = new flash.geom.Matrix();
+   _loc2_.translate((- bmp.width) / 2,(- bmp.height) / 2);
+   _loc2_.rotate(degToRad(deg));
+   _loc2_.translate(bmp.width / 2,bmp.height / 2);
+   var _loc3_ = new flash.display.BitmapData(bmp.width,bmp.height,true,0);
+   _loc3_.draw(bmp,_loc2_);
+   return _loc3_;
+};
+_global.setTint = function(color, clip)
+{
+   var _loc2_ = new flash.geom.Transform(clip);
+   var _loc1_ = new flash.geom.ColorTransform();
+   _loc1_.rgb = color;
+   _loc2_.colorTransform = _loc1_;
+};
+_global.putBelow = function(a, b)
+{
+   if(g.getDepth() > b.getDepth())
+   {
+      a.swapDepths(b);
+   }
+};
+_global.playSound = function(snd, volume, channel, loop)
+{
+   var _loc3_ = !loop?1:999999999;
+   var _loc2_ = new Sound(_root[channel]);
+   _loc2_.attachSound(snd);
+   _loc2_.setVolume(volume);
+   _loc2_.start(0,_loc3_);
+};
+_global.continueSound = function(sound, loop)
+{
+   var _loc2_ = !loop?1:999999999;
+   if(!sound.position || sound.position == sound.duration)
+   {
+      sound.start(0,_loc2_);
+   }
+};
+_global.createSound = function(snd, volume, channel)
+{
+   var _loc2_ = new Sound(_root[channel]);
+   _loc2_.attachSound(snd);
+   _loc2_.setVolume(volume);
+   return _loc2_;
+};
+_global.getField = function(x, y, board)
+{
+   return board["f" + x + "x" + y];
+};
+_global.getFieldStr = function(x, y)
+{
+   return "f" + x + "x" + y;
+};
+_global.getFieldStrO = function(field)
+{
+   return "f" + field.fx + "x" + field.fy;
+};
+_global.findNeighbours = function(field)
+{
+   field.neighbours = new Array();
+   if(field.fx % 2 == 0)
+   {
+      field.neighbours[0] = getField(field.fx + 1,field.fy,field._parent);
+      field.neighbours[1] = getField(field.fx,field.fy + 1,field._parent);
+      field.neighbours[2] = getField(field.fx - 1,field.fy,field._parent);
+      field.neighbours[3] = getField(field.fx - 1,field.fy - 1,field._parent);
+      field.neighbours[4] = getField(field.fx,field.fy - 1,field._parent);
+      field.neighbours[5] = getField(field.fx + 1,field.fy - 1,field._parent);
+   }
+   else
+   {
+      field.neighbours[0] = getField(field.fx + 1,field.fy + 1,field._parent);
+      field.neighbours[1] = getField(field.fx,field.fy + 1,field._parent);
+      field.neighbours[2] = getField(field.fx - 1,field.fy + 1,field._parent);
+      field.neighbours[3] = getField(field.fx - 1,field.fy,field._parent);
+      field.neighbours[4] = getField(field.fx,field.fy - 1,field._parent);
+      field.neighbours[5] = getField(field.fx + 1,field.fy,field._parent);
+   }
+};
+_global.getFurtherNeighbours = function(field)
+{
+   var _loc2_ = new Array(field.neighbours[0].neighbours[0],field.neighbours[0].neighbours[1],field.neighbours[1].neighbours[1],field.neighbours[1].neighbours[2],field.neighbours[2].neighbours[2],field.neighbours[3].neighbours[3],field.neighbours[3].neighbours[4],field.neighbours[4].neighbours[4],field.neighbours[4].neighbours[5],field.neighbours[5].neighbours[5]);
+   _loc2_.push(!field.neighbours[0]?field.neighbours[5].neighbours[0]:field.neighbours[0].neighbours[5]);
+   _loc2_.push(!field.neighbours[2]?field.neighbours[3].neighbours[2]:field.neighbours[2].neighbours[3]);
+   return field.neighbours.concat(_loc2_);
+};
+_global.getDistance = function(a, b)
+{
+   acx = a.fx * 5;
+   bcx = b.fx * 5;
+   if(a.fx % 2 == 0)
+   {
+      acy = a.fy * 10;
+   }
+   else
+   {
+      acy = a.fy * 10 + 5;
+   }
+   if(b.fx % 2 == 0)
+   {
+      bcy = b.fy * 10;
+   }
+   else
+   {
+      bcy = b.fy * 10 + 5;
+   }
+   return Math.sqrt(Math.pow(acx - bcx,2) + Math.pow(acy - bcy,2));
+};
+_global.canWalk = function(a, b, avoid_estate, avoid_water)
+{
+   if(!a || !b)
+   {
+      return false;
+   }
+   var _loc1_ = 0;
+   while(_loc1_ < avoid_estate.length)
+   {
+      if(b.estate == avoid_estate[_loc1_])
+      {
+         return false;
+      }
+      _loc1_ = _loc1_ + 1;
+   }
+   if(!avoid_water)
+   {
+      return true;
+   }
+   if(a.type == "water" && b.type == "water")
+   {
+      return true;
+   }
+   if(a.type == "land" && b.type == "land")
+   {
+      return true;
+   }
+   if(a.type == "water" && b.type == "land")
+   {
+      return true;
+   }
+   if(b.type == "water" && a.estate == "port")
+   {
+      return true;
+   }
+   return false;
+};
+_global.move_cost = new Array(5,5,5,5,5,5);
+_global.findPath = function(startf, endf, avoid_estate, avoid_water)
+{
+   if(!startf || !endf)
+   {
+      return null;
+   }
+   if(avoid_water == undefined)
+   {
+      avoid_water = true;
+   }
+   if(startf.type == "water")
+   {
+      avoid_water = false;
+   }
+   c_Walk = function(a, b)
+   {
+      return canWalk(a,b,avoid_estate,avoid_water);
+   };
+   var _loc2_ = new Array();
+   var _loc5_ = new Array();
+   var _loc10_ = new Object();
+   var _loc6_ = new Object();
+   _loc2_.push({field:startf});
+   _loc2_[_loc2_.length - 1].tc = 0;
+   while(_loc5_[_loc5_.length - 1].field != endf && _loc2_.length)
+   {
+      var _loc3_ = _loc2_.shift();
+      var _loc4_ = 0;
+      while(_loc4_ < 6)
+      {
+         if(c_Walk(_loc3_.field,_loc3_.field.neighbours[_loc4_]) || _loc3_.field.neighbours[_loc4_] == endf)
+         {
+            var _loc1_ = new Object();
+            _loc1_.field = _loc3_.field.neighbours[_loc4_];
+            var _loc8_ = getDistance(_loc1_.field,endf);
+            _loc1_.parent = _loc3_;
+            _loc1_.dc = move_cost[_loc4_] + _loc8_;
+            _loc1_.tc = _loc3_.tc + move_cost[_loc4_];
+            if(_loc6_[getFieldStrO(_loc1_.field)] == undefined)
+            {
+               if(_loc10_[getFieldStrO(_loc1_.field)] == undefined)
+               {
+                  _loc10_[getFieldStrO(_loc1_.field)] = _loc2_.length;
+                  _loc2_.push(_loc1_);
+               }
+            }
+            else if(_loc5_[_loc6_[getFieldStrO(_loc1_.field)]].tc > _loc1_.tc)
+            {
+               _loc5_[_loc6_[getFieldStrO(_loc1_.field)]] = _loc1_;
+            }
+         }
+         _loc4_ = _loc4_ + 1;
+      }
+      _loc6_[getFieldStrO(_loc3_.field)] = _loc5_.length;
+      _loc5_.push(_loc3_);
+      if(_loc2_.length)
+      {
+         var _loc7_ = 0;
+         _loc4_ = 1;
+         while(_loc4_ < _loc2_.length)
+         {
+            if(_loc2_[_loc4_].dc < _loc2_[_loc7_].dc)
+            {
+               _loc7_ = _loc4_;
+            }
+            _loc4_ = _loc4_ + 1;
+         }
+         var _loc13_ = _loc2_[0];
+         _loc2_[0] = _loc2_[_loc7_];
+         _loc2_[_loc7_] = _loc13_;
+      }
+   }
+   if(!_loc2_.length)
+   {
+      return null;
+   }
+   var _loc11_ = new Array();
+   var _loc12_ = _loc5_.length - 1;
+   while(_loc11_[_loc11_.length - 1] != startf)
+   {
+      _loc11_.push(_loc5_[_loc12_].field);
+      _loc12_ = _loc6_[getFieldStrO(_loc5_[_loc12_].parent.field)];
+   }
+   _loc11_.reverse();
+   return _loc11_;
+};
+_global.selectField = function(field, select)
+{
+   if(field.hasOwnProperty("field"))
+   {
+      field = field.field;
+   }
+   field.selected = select;
+   field.selected_i._visible = select;
+};
+_global.selectFields = function(fields, board)
+{
+   var _loc2_ = 0;
+   while(_loc2_ < board.hw_xmax)
+   {
+      var _loc1_ = 0;
+      while(_loc1_ < board.hw_ymax)
+      {
+         selectField(getField(_loc2_,_loc1_,board),false);
+         _loc1_ = _loc1_ + 1;
+      }
+      _loc2_ = _loc2_ + 1;
+   }
+   var _loc4_ = 0;
+   while(_loc4_ < fields.length)
+   {
+      selectField(fields[_loc4_],true);
+      _loc4_ = _loc4_ + 1;
+   }
+};
+_global.addField = function(x, y, board)
+{
+   if(board["f" + x + "x" + y] != undefined)
+   {
+      board["f" + x + "x" + y].removeMovieClip();
+   }
+   nfield = board.attachMovie("field","f" + x + "x" + y,board.getNextHighestDepth());
+   nfield.fx = x;
+   nfield.fy = y;
+   if(x == board.hw_xmax - 1 && y == board.hw_ymax - 1)
+   {
+      board.hw_top_field_depth = nfield.getDepth();
+   }
+   px = x * (board.hw_fw / 4 * 3) + board.hw_fw / 2;
+   if(x % 2 == 0)
+   {
+      py = y * board.hw_fh + board.hw_fh / 2;
+   }
+   else
+   {
+      py = y * board.hw_fh + board.hw_fh;
+   }
+   nfield._x = px;
+   nfield._y = py;
+   nfield.land_id = -1;
+   if(x == 1 && y == 1 || x == board.hw_xmax - 2 && y == 1 || x == board.hw_xmax - 2 && y == board.hw_ymax - 2 || x == 1 && y == board.hw_ymax - 2)
+   {
+      nfield.type = "land";
+   }
+   else
+   {
+      nfield.type = rand(10) <= 1?"land":"water";
+   }
+   nfield.party = -1;
+   nfield.capital = -1;
+   nfield.n_town = false;
+   nfield.n_capital = false;
+   nfield.army = null;
+};
+_global.updateField = function(field)
+{
+   board = field._parent;
+   field.port._visible = false;
+   field.town._visible = false;
+   switch(field.estate)
+   {
+      case "port":
+         field.port._visible = true;
+         break;
+      case "town":
+         field.town._visible = true;
+         field.town.gotoAndStop(field.capital + 2);
+   }
+   function pNormal(icon)
+   {
+      icon._width = 35;
+      icon._height = 35;
+      icon._x = 0;
+      icon._y = 0;
+   }
+   function pSmall(icon)
+   {
+      icon._width = 20;
+      icon._height = 20;
+      icon._x = 0;
+      icon._y = 0;
+   }
+   function pSide(icon)
+   {
+      icon._width = 20;
+      icon._height = 20;
+      icon._x = 18;
+      icon._y = -4;
+   }
+   if(field.army)
+   {
+      pSide(field.town);
+      pSide(field.port);
+   }
+   else if(field.capital < 0)
+   {
+      pSmall(field.town);
+      pNormal(field.port);
+   }
+   else
+   {
+      pNormal(field.town);
+      pNormal(field.port);
+   }
+   x = field.fx;
+   y = field.fy;
+   if(field.party >= 0 && !board["pb" + field.party]["f" + x + "x" + y])
+   {
+      brd = board["pb" + field.party].attachMovie("hex","f" + x + "x" + y,board["pb" + field.party].getNextHighestDepth());
+      px = x * (board.hw_fw / 4 * 3) + board.hw_fw / 2;
+      if(x % 2 == 0)
+      {
+         py = y * board.hw_fh + board.hw_fh / 2;
+      }
+      else
+      {
+         py = y * board.hw_fh + board.hw_fh;
+      }
+      brd._x = px;
+      brd._y = py;
+   }
+   var _loc1_ = 0;
+   while(_loc1_ < board.hw_parties_count)
+   {
+      if(_loc1_ != field.party || field.party < 0)
+      {
+         if(board["pb" + _loc1_]["f" + x + "x" + y])
+         {
+            if(!board["pb" + _loc1_]["f" + x + "x" + y].removing)
+            {
+               board["pb" + _loc1_]["f" + x + "x" + y].gotoAndPlay("remove");
+            }
+         }
+      }
+      _loc1_ = _loc1_ + 1;
+   }
+};
+_global.createBackground = function(board)
+{
+   board.background_1 = new flash.display.BitmapData(800,600,true,0);
+   board.background_2 = new flash.display.BitmapData(800,600,true,0);
+   board.attachBitmap(board.background_2,board.getNextHighestDepth());
+   var _loc4_ = 0;
+   while(_loc4_ < 6)
+   {
+      var _loc3_ = 0;
+      while(_loc3_ < 4)
+      {
+         var _loc1_ = flash.display.BitmapData.loadBitmap("ld_" + (rand(6) + 1) + ".png");
+         var _loc2_ = flash.display.BitmapData.loadBitmap("l_" + (rand(6) + 1) + ".png");
+         f1 = rand(2);
+         f2 = rand(2);
+         r = rand(4) * 90;
+         _loc1_ = flipBitmap(_loc1_,f1,f2);
+         _loc1_ = rotateBitmap(_loc1_,r);
+         _loc2_ = flipBitmap(_loc2_,f1,f2);
+         _loc2_ = rotateBitmap(_loc2_,r);
+         pasteBitmap(_loc4_ * 125 - 15,_loc3_ * 125 - 15,_loc1_,board.background_1);
+         pasteBitmap(_loc4_ * 125 - 15,_loc3_ * 125 - 15,_loc2_,board.background_2);
+         _loc1_.dispose();
+         _loc2_.dispose();
+         _loc3_ = _loc3_ + 1;
+      }
+      _loc4_ = _loc4_ + 1;
+   }
+};
+_global.createCapitals = function(board)
+{
+   var _loc3_ = 0;
+   while(_loc3_ < board.hw_parties_count)
+   {
+      cap_set = false;
+      attempt = 0;
+      while(!cap_set)
+      {
+         tc = rand(board.hw_towns.length);
+         ok = true;
+         if(board.hw_towns[tc].capital >= 0)
+         {
+            ok = false;
+         }
+         else
+         {
+            var _loc2_ = 0;
+            while(_loc2_ < _loc3_)
+            {
+               if(getDistance(board.hw_towns[tc],board.hw_parties_capitals[_loc2_]) < 100 - attempt)
+               {
+                  ok = false;
+               }
+               _loc2_ = _loc2_ + 1;
+            }
+         }
+         if(ok)
+         {
+            board.hw_towns[tc].capital = _loc3_;
+            board.hw_parties_capitals[_loc3_] = board.hw_towns[tc];
+            annexLand(_loc3_,board.hw_towns[tc],true);
+            cap_set = true;
+         }
+         attempt++;
+      }
+      _loc3_ = _loc3_ + 1;
+   }
+};
+_global.generateMap = function(board)
+{
+   function randTown()
+   {
+      cnr = rand(towns.length);
+      cname = towns[cnr];
+      towns[cnr] = towns[0];
+      towns[0] = cname;
+      return towns.shift();
+   }
+   function addTown(x, y, board)
+   {
+      var _loc1_ = flash.display.BitmapData.loadBitmap("cd_" + (rand(6) + 1) + ".png");
+      var _loc2_ = flash.display.BitmapData.loadBitmap("c_" + (rand(6) + 1) + ".png");
+      f1 = rand(2);
+      f2 = rand(2);
+      r = rand(360);
+      _loc1_ = flipBitmap(_loc1_,f1,f2);
+      _loc1_ = rotateBitmap(_loc1_,r);
+      _loc2_ = flipBitmap(_loc2_,f1,f2);
+      _loc2_ = rotateBitmap(_loc2_,r);
+      pasteBitmap(getField(x,y,board)._x - _loc1_.width / 2,getField(x,y,board)._y - _loc1_.height / 2,_loc1_,board.background_1);
+      pasteBitmap(getField(x,y,board)._x - _loc2_.width / 2,getField(x,y,board)._y - _loc2_.height / 2,_loc2_,board.background_2);
+      _loc1_.dispose();
+      _loc2_.dispose();
+   }
+   createBackground(board);
+   var _loc3_ = 0;
+   while(_loc3_ < board.hw_parties_count)
+   {
+      if(!board["pb" + _loc3_])
+      {
+         var _loc11_ = board.createEmptyMovieClip("pb" + _loc3_,board.getNextHighestDepth());
+         var _loc12_ = new flash.filters.GlowFilter(board.hw_parties_colors[_loc3_],0.75,30,30,2,1,true,true);
+         _loc11_.filters = [_loc12_];
+      }
+      _loc3_ = _loc3_ + 1;
+   }
+   board.attachMovie("sea","sea",board.getNextHighestDepth());
+   board.sea.sea.bmp = new flash.display.BitmapData(800,600,true,0);
+   board.sea.sea.attachBitmap(board.sea.sea.bmp,board.sea.sea.getNextHighestDepth());
+   board.attachMovie("frame","frame",board.getNextHighestDepth());
+   var _loc6_ = 0;
+   while(_loc6_ < board.hw_xmax)
+   {
+      var _loc4_ = 0;
+      while(_loc4_ < board.hw_ymax)
+      {
+         addField(_loc6_,_loc4_,board);
+         _loc4_ = _loc4_ + 1;
+      }
+      _loc6_ = _loc6_ + 1;
+   }
+   _loc6_ = 0;
+   while(_loc6_ < board.hw_xmax)
+   {
+      _loc4_ = 0;
+      while(_loc4_ < board.hw_ymax)
+      {
+         findNeighbours(getField(_loc6_,_loc4_,board));
+         _loc4_ = _loc4_ + 1;
+      }
+      _loc6_ = _loc6_ + 1;
+   }
+   _loc6_ = 0;
+   while(_loc6_ < board.hw_xmax)
+   {
+      _loc4_ = 0;
+      while(_loc4_ < board.hw_ymax)
+      {
+         if(getField(_loc6_,_loc4_,board).type == "water")
+         {
+            land = 0;
+            _loc3_ = 0;
+            while(_loc3_ < 6)
+            {
+               if(getField(_loc6_,_loc4_,board).neighbours[_loc3_].type == "land")
+               {
+                  land++;
+               }
+               _loc3_ = _loc3_ + 1;
+            }
+            if(land >= 1)
+            {
+               getField(_loc6_,_loc4_,board).tl = true;
+            }
+         }
+         _loc4_ = _loc4_ + 1;
+      }
+      _loc6_ = _loc6_ + 1;
+   }
+   _loc6_ = 0;
+   while(_loc6_ < board.hw_xmax)
+   {
+      _loc4_ = 0;
+      while(_loc4_ < board.hw_ymax)
+      {
+         if(getField(_loc6_,_loc4_,board).tl)
+         {
+            getField(_loc6_,_loc4_,board).type = "land";
+         }
+         _loc4_ = _loc4_ + 1;
+      }
+      _loc6_ = _loc6_ + 1;
+   }
+   _loc6_ = 0;
+   while(_loc6_ < board.hw_xmax)
+   {
+      _loc4_ = 0;
+      while(_loc4_ < board.hw_ymax)
+      {
+         if(getField(_loc6_,_loc4_,board).type == "water")
+         {
+            water = 0;
+            _loc3_ = 0;
+            while(_loc3_ < 6)
+            {
+               if(getField(_loc6_,_loc4_,board).neighbours[_loc3_].type == "water")
+               {
+                  water++;
+               }
+               _loc3_ = _loc3_ + 1;
+            }
+            if(!water)
+            {
+               getField(_loc6_,_loc4_,board).type = "land";
+            }
+         }
+         _loc4_ = _loc4_ + 1;
+      }
+      _loc6_ = _loc6_ + 1;
+   }
+   _loc6_ = 0;
+   while(_loc6_ < board.hw_xmax)
+   {
+      _loc4_ = 0;
+      while(_loc4_ < board.hw_ymax)
+      {
+         if(getField(_loc6_,_loc4_,board).type == "land")
+         {
+            board.hw_land = board.hw_land + 1;
+         }
+         _loc4_ = _loc4_ + 1;
+      }
+      _loc6_ = _loc6_ + 1;
+   }
+   _loc6_ = 0;
+   while(_loc6_ < board.hw_xmax)
+   {
+      _loc4_ = 0;
+      while(_loc4_ < board.hw_ymax)
+      {
+         if(getField(_loc6_,_loc4_,board).type == "land" && getField(_loc6_,_loc4_,board).land_id < 0)
+         {
+            clid = board.hw_lands.length;
+            board.hw_lands.push(new Array());
+            board.hw_lands[clid].push(getField(_loc6_,_loc4_,board));
+            getField(_loc6_,_loc4_,board).land_id = clid;
+            add_ngb2l = function(field, lid)
+            {
+               newf = 0;
+               var _loc1_ = 0;
+               while(_loc1_ < 6)
+               {
+                  if(field.neighbours[_loc1_] && field.neighbours[_loc1_].type == "land" && field.neighbours[_loc1_].land_id < 0)
+                  {
+                     board.hw_lands[lid].push(field.neighbours[_loc1_]);
+                     field.neighbours[_loc1_].land_id = lid;
+                     newf++;
+                  }
+                  _loc1_ = _loc1_ + 1;
+               }
+               return newf;
+            };
+            cc = 0;
+            cnr = cc;
+            while(cc >= cnr)
+            {
+               cc = cc + add_ngb2l(board.hw_lands[clid][cnr],clid);
+               cnr++;
+            }
+         }
+         _loc4_ = _loc4_ + 1;
+      }
+      _loc6_ = _loc6_ + 1;
+   }
+   cp = 0;
+   _loc6_ = 0;
+   while(_loc6_ < board.hw_xmax)
+   {
+      _loc4_ = 0;
+      while(_loc4_ < board.hw_ymax)
+      {
+         if(_loc6_ == 1 && _loc4_ == 1 || _loc6_ == board.hw_xmax - 2 && _loc4_ == 1 || _loc6_ == board.hw_xmax - 2 && _loc4_ == board.hw_ymax - 2 || _loc6_ == 1 && _loc4_ == board.hw_ymax - 2)
+         {
+            getField(_loc6_,_loc4_,board).estate = "town";
+            board.hw_towns.push(getField(_loc6_,_loc4_,board));
+            getField(_loc6_,_loc4_,board).capital = cp;
+            board.hw_parties_capitals[cp] = getField(_loc6_,_loc4_,board);
+            annexLand(cp,getField(_loc6_,_loc4_,board),true);
+            cp++;
+         }
+         _loc4_ = _loc4_ + 1;
+      }
+      _loc6_ = _loc6_ + 1;
+   }
+   _loc3_ = 0;
+   while(_loc3_ < board.hw_lands.length)
+   {
+      tcnt = Math.floor(board.hw_lands[_loc3_].length / 10) + 1;
+      var _loc5_ = 0;
+      while(_loc5_ < tcnt)
+      {
+         created = false;
+         attempts = 0;
+         while(!created)
+         {
+            attempts++;
+            if(attempts > 10)
+            {
+               created = true;
+            }
+            nt = rand(board.hw_lands[_loc3_].length);
+            if(!board.hw_lands[_loc3_][nt].estate)
+            {
+               ok = true;
+               var _loc2_ = 0;
+               while(_loc2_ < 6)
+               {
+                  if(board.hw_lands[_loc3_][nt].neighbours[_loc2_].type == "water" || board.hw_lands[_loc3_][nt].neighbours[_loc2_].estate)
+                  {
+                     ok = false;
+                  }
+                  _loc2_ = _loc2_ + 1;
+               }
+               if(ok)
+               {
+                  board.hw_lands[_loc3_][nt].estate = "town";
+                  board.hw_towns.push(board.hw_lands[_loc3_][nt]);
+                  created = true;
+               }
+            }
+         }
+         _loc5_ = _loc5_ + 1;
+      }
+      _loc3_ = _loc3_ + 1;
+   }
+   shuffle(board.hw_towns);
+   var _loc7_ = 0;
+   _loc3_ = 0;
+   while(_loc3_ < board.hw_towns.length - 1)
+   {
+      path = findPath(board.hw_towns[_loc3_],board.hw_towns[_loc3_ + 1],["town"],true);
+      if(path == null || path.length > _loc7_)
+      {
+         path = findPath(board.hw_towns[_loc3_],board.hw_towns[_loc3_ + 1],["town"],false);
+         pn++;
+      }
+      _loc5_ = 1;
+      while(_loc5_ < path.length - 1)
+      {
+         if(path[_loc5_].type == "land" && path[_loc5_ + 1].type == "water")
+         {
+            path[_loc5_].estate = "port";
+            _loc7_ = _loc7_ + 1;
+         }
+         if(path[_loc5_].type == "land" && path[_loc5_ - 1].type == "water")
+         {
+            path[_loc5_].estate = "port";
+            _loc7_ = _loc7_ + 1;
+         }
+         _loc5_ = _loc5_ + 1;
+      }
+      _loc3_ = _loc3_ + 1;
+   }
+   var _loc10_ = new Array(2,1,2,2,1,2);
+   var _loc8_ = new Array(1,0,0,0,0,1);
+   var _loc9_ = new Array(1,1,1,0,0,0);
+   _loc6_ = 0;
+   while(_loc6_ < board.hw_xmax)
+   {
+      _loc4_ = 0;
+      while(_loc4_ < board.hw_ymax)
+      {
+         if(getField(_loc6_,_loc4_,board).type == "water")
+         {
+            var _loc1_ = flash.display.BitmapData.loadBitmap("m_" + (rand(6) + 1) + ".png");
+            _loc1_ = flipBitmap(_loc1_,rand(2),rand(2));
+            _loc1_ = rotateBitmap(_loc1_,rand(2) * 180);
+            pasteBitmap(getField(_loc6_,_loc4_,board)._x - _loc1_.width / 2,getField(_loc6_,_loc4_,board)._y - _loc1_.height / 2,_loc1_,board.sea.sea.bmp);
+            _loc1_.dispose();
+            _loc3_ = 0;
+            while(_loc3_ < 6)
+            {
+               if(getField(_loc6_,_loc4_,board).neighbours[_loc3_].estate == "port")
+               {
+                  _loc1_ = flash.display.BitmapData.loadBitmap("m_p" + _loc10_[_loc3_] + ".png");
+                  _loc1_ = flipBitmap(_loc1_,_loc8_[_loc3_],_loc9_[_loc3_]);
+                  pasteBitmap(getField(_loc6_,_loc4_,board)._x - _loc1_.width / 2,getField(_loc6_,_loc4_,board)._y - _loc1_.height / 2,_loc1_,board.sea.sea.bmp);
+                  _loc1_.dispose();
+               }
+               _loc3_ = _loc3_ + 1;
+            }
+         }
+         _loc4_ = _loc4_ + 1;
+      }
+      _loc6_ = _loc6_ + 1;
+   }
+   var towns = new Array("Abu Dhabi","Abuja","Accra","Addis Ababa","Algiers","Amman","Amsterdam","Ankara","Antananarivo","Apia","Ashgabat","Asmara","Astana","Asunción","Athens","Baghdad","Baku","Bamako","Bangkok","Bangui","Banjul","Basseterre","Beijing","Beirut","Belgrade","Belmopan","Berlin","Bern","Bishkek","Bissau","Bogotá","Brasília","Bratislava","Brazzaville","Bridgetown","Brussels","Bucharest","Budapest","Buenos Aires","Bujumbura","Cairo","Canberra","Cape Town","Caracas","Castries","Chisinau","Conakry","Copenhagen","Cotonou","Dakar","Damascus","Dhaka","Dili","Djibouti","Dodoma","Doha","Dublin","Dushanbe","Delhi","Freetown","Funafuti","Gabarone","Georgetown","Guatemala City","Hague","Hanoi","Harare","Havana","Helsinki","Honiara","Hong Kong","Islamabad","Jakarta","Jerusalem","Kabul","Kampala","Kathmandu","Khartoum","Kyiv","Kigali","Kingston","Kingstown","Kinshasa","Kuala Lumpur","Kuwait City","La Paz","Liberville","Lilongwe","Lima","Lisbon","Ljubljana","Lobamba","Lomé","London","Luanda","Lusaka","Luxembourg","Madrid","Majuro","Malé","Managua","Manama","Manila","Maputo","Maseru","Mbabane","Melekeok","Mexico City","Minsk","Mogadishu","Monaco","Monrovia","Montevideo","Moroni","Moscow","Muscat","Nairobi","Nassau","Naypyidaw","N\'Djamena","New Delhi","Niamey","Nicosia","Nouakchott","Nuku\'alofa","Nuuk","Oslo","Ottawa","Ouagadougou","Palikir","Panama City","Paramaribo","Paris","Phnom Penh","Podgorica","Prague","Praia","Pretoria","Pyongyang","Quito","Rabat","Ramallah","Reykjavík","Riga","Riyadh","Rome","Roseau","San José","San Marino","San Salvador","Sanaá","Santiago","Santo Domingo","Sao Tomé","Sarajevo","Seoul","Singapore","Skopje","Sofia","South Tarawa","St. George\'s","St. John\'s","Stockholm","Sucre","Suva","Taipei","Tallinn","Tashkent","Tbilisi","Tegucigalpa","Teheran","Thimphu","Tirana","Tokyo","Tripoli","Tunis","Ulaanbaatar","Vaduz","Valletta","Victoria","Vienna","Vientiane","Vilnius","Warsaw","Washington","Wellington","Windhoek","Yamoussoukro","Yaoundé","Yerevan","Zagreb","Zielona Góra","Poznań","Wrocław","Gdańsk","Szczecin","Łódź","Białystok","Toruń","St. Petersburg","Turku","Örebro","Chengdu","Wuppertal","Frankfurt","Düsseldorf","Essen","Duisburg","Magdeburg","Bonn","Brno","Tours","Bordeaux","Nice","Lyon","Stara Zagora","Milan","Bologna","Sydney","Venice","New York","Barcelona","Zaragoza","Valencia","Seville","Graz","Munich","Birmingham","Naples","Cologne","Turin","Marseille","Leeds","Kraków","Palermo","Genoa","Stuttgart","Dortmund","Rotterdam","Glasgow","Málaga","Bremen","Sheffield","Antwerp","Plovdiv","Thessaloniki","Kaunas","Lublin","Varna","Ostrava","Iaşi","Katowice","Cluj-Napoca","Timişoara","Constanţa","Pskov","Vitebsk","Arkhangelsk","Novosibirsk","Samara","Omsk","Chelyabinsk","Ufa","Volgograd","Perm","Kharkiv","Odessa","Donetsk","Dnipropetrovsk","Los Angeles","Chicago","Houston","Phoenix","Philadelphia","Dallas","Detroit","Indianapolis","San Francisco","Atlanta","Austin","Vermont","Toronto","Montreal","Vancouver","Gdynia","Edmonton");
+   _loc6_ = 0;
+   while(_loc6_ < board.hw_xmax)
+   {
+      _loc4_ = 0;
+      while(_loc4_ < board.hw_ymax)
+      {
+         updateField(getField(_loc6_,_loc4_,board));
+         switch(getField(_loc6_,_loc4_,board).estate)
+         {
+            case "town":
+               addTown(_loc6_,_loc4_,board);
+               getField(_loc6_,_loc4_,board).town_name = randTown();
+               break;
+            case "port":
+               addTown(_loc6_,_loc4_,board);
+               getField(_loc6_,_loc4_,board).town_name = randTown();
+               break;
+            default:
+               getField(_loc6_,_loc4_,board).town_sign._visible = false;
+         }
+         _loc4_ = _loc4_ + 1;
+      }
+      _loc6_ = _loc6_ + 1;
+   }
+   board.sea.cacheAsBitmap = true;
+};
+_global.getFieldParty = function(field)
+{
+   if(field.army)
+   {
+      return field.army.party;
+   }
+   return field.party;
+};
+_global.getPossibleMoves = function(field, no_self, check_power)
+{
+   var _loc4_ = undefined;
+   function joinCnd(field1, field2)
+   {
+      if(!field1)
+      {
+         return false;
+      }
+      if(field1 == field2)
+      {
+         return false;
+      }
+      if(!field1.army)
+      {
+         return true;
+      }
+      if(check_power && field1.army && field2.army && field1.army.party != field2.army.party)
+      {
+         ap = field1.army.count + field1.army.morale;
+         bp = field2.army.count + field2.army.morale;
+         if(bp < 0.75 * ap)
+         {
+            return false;
+         }
+      }
+      return field1.army.party != field2.army.party || field1.type != "water" && field1.army.count < 99;
+   }
+   if(!no_self)
+   {
+      _loc4_ = new Array(field);
+   }
+   else
+   {
+      _loc4_ = new Array();
+   }
+   if(field.estate == "port")
+   {
+      var _loc2_ = 0;
+      while(_loc2_ < 6)
+      {
+         if(joinCnd(field.neighbours[_loc2_],field))
+         {
+            _loc4_.push(field.neighbours[_loc2_]);
+            if(field.neighbours[_loc2_].type == "water" && !field.neighbours[_loc2_].army)
+            {
+               var _loc3_ = 0;
+               while(_loc3_ < 6)
+               {
+                  if(field.neighbours[_loc2_].neighbours[_loc3_].type == "water" && joinCnd(field.neighbours[_loc2_].neighbours[_loc3_],field))
+                  {
+                     _loc4_.push(field.neighbours[_loc2_].neighbours[_loc3_]);
+                  }
+                  _loc3_ = _loc3_ + 1;
+               }
+            }
+            else if(field.neighbours[_loc2_].type == "land" && !field.neighbours[_loc2_].estate && !field.neighbours[_loc2_].army)
+            {
+               _loc3_ = 0;
+               while(_loc3_ < 6)
+               {
+                  if(field.neighbours[_loc2_].neighbours[_loc3_].type == "land" && joinCnd(field.neighbours[_loc2_].neighbours[_loc3_],field))
+                  {
+                     _loc4_.push(field.neighbours[_loc2_].neighbours[_loc3_]);
+                  }
+                  _loc3_ = _loc3_ + 1;
+               }
+            }
+         }
+         _loc2_ = _loc2_ + 1;
+      }
+   }
+   else if(field.type == "water")
+   {
+      _loc2_ = 0;
+      while(_loc2_ < 6)
+      {
+         if(joinCnd(field.neighbours[_loc2_],field))
+         {
+            _loc4_.push(field.neighbours[_loc2_]);
+            if(field.neighbours[_loc2_].type == "water" && !field.neighbours[_loc2_].army)
+            {
+               _loc3_ = 0;
+               while(_loc3_ < 6)
+               {
+                  if(joinCnd(field.neighbours[_loc2_].neighbours[_loc3_],field))
+                  {
+                     _loc4_.push(field.neighbours[_loc2_].neighbours[_loc3_]);
+                  }
+                  _loc3_ = _loc3_ + 1;
+               }
+            }
+         }
+         _loc2_ = _loc2_ + 1;
+      }
+   }
+   else if(field.type == "land")
+   {
+      _loc2_ = 0;
+      while(_loc2_ < 6)
+      {
+         if(field.neighbours[_loc2_].type == "land" && joinCnd(field.neighbours[_loc2_],field))
+         {
+            _loc4_.push(field.neighbours[_loc2_]);
+            if(!field.neighbours[_loc2_].estate && !field.neighbours[_loc2_].army)
+            {
+               _loc3_ = 0;
+               while(_loc3_ < 6)
+               {
+                  if(field.neighbours[_loc2_].neighbours[_loc3_].type == "land" && joinCnd(field.neighbours[_loc2_].neighbours[_loc3_],field))
+                  {
+                     _loc4_.push(field.neighbours[_loc2_].neighbours[_loc3_]);
+                  }
+                  _loc3_ = _loc3_ + 1;
+               }
+            }
+         }
+         _loc2_ = _loc2_ + 1;
+      }
+   }
+   return _loc4_;
+};
+_global.listArmies = function(board)
+{
+   var _loc4_ = 0;
+   while(_loc4_ < board.hw_parties_count)
+   {
+      board.hw_parties_armies[_loc4_] = new Array();
+      board.hw_parties_total_count[_loc4_] = 0;
+      board.hw_parties_total_power[_loc4_] = 0;
+      _loc4_ = _loc4_ + 1;
+   }
+   var _loc3_ = 0;
+   while(_loc3_ < board.hw_xmax)
+   {
+      var _loc2_ = 0;
+      while(_loc2_ < board.hw_ymax)
+      {
+         if(getField(_loc3_,_loc2_,board).army && getField(_loc3_,_loc2_,board).army.remove_time < 0)
+         {
+            board.hw_parties_armies[getField(_loc3_,_loc2_,board).army.party].push(getField(_loc3_,_loc2_,board).army);
+            board.hw_parties_total_count[getField(_loc3_,_loc2_,board).army.party] = board.hw_parties_total_count[getField(_loc3_,_loc2_,board).army.party] + getField(_loc3_,_loc2_,board).army.count;
+            board.hw_parties_total_power[getField(_loc3_,_loc2_,board).army.party] = board.hw_parties_total_power[getField(_loc3_,_loc2_,board).army.party] + (getField(_loc3_,_loc2_,board).army.count + getField(_loc3_,_loc2_,board).army.morale);
+         }
+         _loc2_ = _loc2_ + 1;
+      }
+      _loc3_ = _loc3_ + 1;
+   }
+};
+_global.updateArmy = function(count, morale, party, board, army, field)
+{
+   if(!army)
+   {
+      army = field.army;
+   }
+   if(!field)
+   {
+      field = army.field;
+   }
+   if(!board)
+   {
+      board = field._parent;
+   }
+   if(!army)
+   {
+      if(count <= 0)
+      {
+         return undefined;
+      }
+      board.hw_lAID = board.hw_lAID + 1;
+      alevel = board.getNextHighestDepth();
+      aname = "army" + board.hw_lAID;
+      board.attachMovie("army",aname,alevel);
+      board.hw_aTL = alevel;
+      board[aname]._x = field._x;
+      board[aname]._y = field._y;
+      board[aname].field = field;
+      board[aname].party = party;
+      board[aname].remove_time = -1;
+      field.army = board[aname];
+      army = field.army;
+   }
+   else if(count <= 0)
+   {
+      deleteArmy(army);
+      return undefined;
+   }
+   army.count = count >= 100?99:count;
+   if(morale < 0)
+   {
+      morale = 0;
+   }
+   army.morale = morale >= army.count?army.count:morale;
+   army.party = party;
+};
+_global.joinUnits = function(count, morale, party, board, army, field)
+{
+   if(!army)
+   {
+      army = field.army;
+   }
+   if(!field)
+   {
+      field = army.field;
+   }
+   if(!army)
+   {
+      updateArmy(count,morale,party,board,army,field);
+   }
+   else
+   {
+      updateArmy(army.count + count,Math.floor((army.count * army.morale + count * morale) / (army.count + count)),party,board,army,field);
+   }
+};
+_global.addMorale = function(morale, army)
+{
+   morale = morale + army.morale;
+   if(morale < 0)
+   {
+      morale = 0;
+   }
+   army.morale = morale >= army.count?army.count:morale;
+};
+_global.addMoraleForAll = function(morale, party, board)
+{
+   if(morale == 0)
+   {
+      return undefined;
+   }
+   var _loc1_ = 0;
+   while(_loc1_ < board.hw_parties_armies[party].length)
+   {
+      addMorale(morale,board.hw_parties_armies[party][_loc1_]);
+      _loc1_ = _loc1_ + 1;
+   }
+};
+_global.addMoraleForAA = function(morale, army)
+{
+   addMorale(morale[1],army);
+   if(morale[0] != 0)
+   {
+      addMoraleForAll(morale[0],army.party,army._parent);
+   }
+};
+_global.unitsSpawn = function(party, board)
+{
+   ucount = board.hw_parties_lands[party].length + board.hw_parties_ports[party].length * 5;
+   ucount = Math.floor(ucount / board.hw_parties_towns[party].length);
+   var _loc3_ = 0;
+   while(_loc3_ < board.hw_parties_count)
+   {
+      if(board.hw_parties_capitals[_loc3_].party == party)
+      {
+         var _loc4_ = board.hw_parties_morale[party];
+         if(board.hw_parties_capitals[_loc3_].army)
+         {
+            _loc4_ = board.hw_parties_capitals[_loc3_].army.morale;
+         }
+         joinUnits(5,_loc4_,party,board,null,board.hw_parties_capitals[_loc3_]);
+      }
+      _loc3_ = _loc3_ + 1;
+   }
+   _loc3_ = 0;
+   while(_loc3_ < board.hw_parties_towns[party].length)
+   {
+      _loc4_ = board.hw_parties_morale[party];
+      if(board.hw_parties_towns[party][_loc3_].army)
+      {
+         _loc4_ = board.hw_parties_towns[party][_loc3_].army.morale;
+      }
+      joinUnits(5 + ucount,_loc4_,party,board,null,board.hw_parties_towns[party][_loc3_]);
+      _loc3_ = _loc3_ + 1;
+   }
+};
+_global.annexLand = function(party, field, startup)
+{
+   function moraleEarned(party, field)
+   {
+      if(field.capital >= 0)
+      {
+         if(board.human == party && board.hw_parties_provinces_cp[party] && board.hw_parties_provinces_cp[party].length >= 2)
+         {
+            updateBoard(board);
+            board.win = true;
+            board._parent.gotoAndPlay("game_over");
+            board.stop();
+         }
+         if(field.capital == field.party)
+         {
+            if(board.human == party)
+            {
+               board.subject = field;
+               board.news = "province_conquered";
+            }
+            return new Array(50,30);
+         }
+         if(board.human == party)
+         {
+            board.subject = field;
+            board.news = "town_captured";
+         }
+         return new Array(30,20);
+      }
+      if(field.estate == "town")
+      {
+         if(board.human == party && (!board.subject || board.subject.capital < 0))
+         {
+            board.subject = field;
+            if(field.party >= 0)
+            {
+               board.news = "town_captured";
+            }
+            else
+            {
+               board.news = "town_annexed";
+            }
+         }
+         return new Array(10,10);
+      }
+      if(field.estate == "port")
+      {
+         if(board.human == party && (!board.subject || board.subject.estate != "town"))
+         {
+            board.subject = field;
+            if(field.party >= 0)
+            {
+               board.news = "town_captured";
+            }
+            else
+            {
+               board.news = "town_annexed";
+            }
+         }
+         return new Array(5,5);
+      }
+      if(field.type == "land")
+      {
+         return new Array(1,0);
+      }
+      return new Array(0,0);
+   }
+   function moraleLost(party, field)
+   {
+      if(field.capital == party)
+      {
+         if(board.human == party)
+         {
+            updateBoard(board);
+            board.win = false;
+            board._parent.gotoAndPlay("game_over");
+            board.stop();
+         }
+      }
+      else
+      {
+         if(field.capital >= 0)
+         {
+            if(board.human == party)
+            {
+               board.subject = field;
+               board.news = "town_lost";
+            }
+            return -30;
+         }
+         if(field.estate == "town")
+         {
+            if(board.human == party && (!board.subject || board.subject.capital < 0))
+            {
+               board.subject = field;
+               board.news = "town_lost";
+            }
+            return -10;
+         }
+         if(field.estate == "port")
+         {
+            if(board.human == party && (!board.subject || board.subject.estate != "town"))
+            {
+               board.subject = field;
+               board.news = "town_lost";
+            }
+            return -5;
+         }
+      }
+      return 0;
+   }
+   if(!field.army && !startup)
+   {
+      return undefined;
+   }
+   board = field._parent;
+   if(field.type == "land")
+   {
+      if(field.party >= 0 && field.party != party)
+      {
+         addMoraleForAll(moraleLost(field.party,field),field.party,board);
+         if(field.capital >= 0 && field.capital == field.party && board.hw_parties_provinces_cp[field.party].length)
+         {
+            var _loc2_ = 0;
+            while(_loc2_ < board.hw_parties_provinces_cp[field.party].length)
+            {
+               if(board.hw_parties_provinces_cp[field.party][_loc2_].army)
+               {
+                  setExplosion(board.hw_parties_provinces_cp[field.party][_loc2_].army,board.hw_parties_provinces_cp[field.party][_loc2_].army,null);
+                  board.hw_parties_provinces_cp[field.party][_loc2_].army = null;
+               }
+               updateArmy(99,99,board.hw_parties_provinces_cp[field.party][_loc2_].capital,board,null,board.hw_parties_provinces_cp[field.party][_loc2_]);
+               annexLand(board.hw_parties_provinces_cp[field.party][_loc2_].capital,board.hw_parties_provinces_cp[field.party][_loc2_],true);
+               _loc2_ = _loc2_ + 1;
+            }
+         }
+      }
+      if(!startup && field.party != party)
+      {
+         addMoraleForAA(moraleEarned(party,field),field.army);
+      }
+      field.party = party;
+      _loc2_ = 0;
+      while(_loc2_ < 6)
+      {
+         if(field.neighbours[_loc2_].type == "land" && !field.neighbours[_loc2_].estate && !field.neighbours[_loc2_].army && !(board.hw_peace >= 0 && (field.neighbours[_loc2_].party == board.hw_peace && party == board.human) || party == board.hw_peace && field.neighbours[_loc2_].party == board.human))
+         {
+            if(!startup && field.neighbours[_loc2_].party != party)
+            {
+               addMoraleForAA(moraleEarned(party,field.neighbours[_loc2_]),field.army);
+            }
+            field.neighbours[_loc2_].party = party;
+         }
+         _loc2_ = _loc2_ + 1;
+      }
+   }
+};
+_global.setExplosion = function(attacking, exploding, army_waiting)
+{
+   if(!exploding)
+   {
+      exploding = attacking;
+   }
+   attacking.exploding = exploding;
+   exploding.remove_time = 36;
+   if(army.is_waiting)
+   {
+      deleteArmy(army.is_waiting);
+   }
+   if(army_waiting)
+   {
+      army.waiting = army_waiting;
+      army_waiting.is_waiting = army;
+   }
+};
+_global.expl_sound_cnt = 0;
+_global.fireExplosion = function(attacking)
+{
+   attacking.swapDepths(attacking._parent.hw_aTL);
+   attacking.exploded = true;
+   attacking.attachMovie("explosion","expl",attacking.getNextHighestDepth());
+   if(_global.expl_sound_cnt < 2)
+   {
+      playSound("s_explosion_n",15,"explosions");
+      _global.expl_sound_cnt = _global.expl_sound_cnt + 1;
+   }
+};
+_global.setArmyRemoval = function(army, army_waiting)
+{
+   army.remove = true;
+   army.remove_time = 24;
+   if(army.is_waiting)
+   {
+      deleteArmy(army.is_waiting);
+   }
+   if(army_waiting)
+   {
+      army.waiting = army_waiting;
+      army_waiting.is_waiting = army;
+   }
+};
+_global.attack = function(army1, field)
+{
+   army2 = field.army;
+   if(!army2)
+   {
+      return true;
+   }
+   army1_pw = army1.count + army1.morale;
+   army2_pw = army2.count + army2.morale;
+   if(army1_pw > army2_pw)
+   {
+      addMoraleForAll(- Math.floor(army2.count / 10),army2.party,army2._parent);
+      army1.count = army1.count - Math.floor(army2_pw / army1_pw * army1.count);
+      army1.count = army1.count <= 0?1:army1.count;
+      army1.morale = army1.morale > army1.count?army1.count:army1.morale;
+      setExplosion(army1,army2,army1);
+      return true;
+   }
+   addMoraleForAll(- Math.floor(army1.count / 10),army1.party,army1._parent);
+   army2.count = army2.count - Math.floor(army1_pw / army2_pw * army1.count);
+   army2.count = army2.count <= 0?1:army2.count;
+   army2.morale = army2.morale > army2.count?army2.count:army2.morale;
+   setExplosion(army1,army1,army2);
+   return false;
+};
+_global.moveArmy = function(army, field)
+{
+   afield = army.field;
+   board = field._parent;
+   if(board.hw_peace >= 0 && (field.party == board.hw_peace && army.party == board.human) || army.party == board.hw_peace && field.party == board.human)
+   {
+      addMoraleForAll(30,field.party,board);
+      board.hw_pact_just_broken = board.hw_peace;
+      board.hw_peace = -1;
+   }
+   army.field.army = null;
+   army.field = field;
+   army.moved = true;
+   if(field.army && field.party != army.party)
+   {
+      playSound(!rand(3)?"s_war":"s_gun",100,"war");
+      putBelow(army,field.army);
+      if(!attack(army,field))
+      {
+         updateBoard(board);
+         return false;
+      }
+   }
+   else if(field.army && field.party == army.party)
+   {
+      putBelow(army,field.army);
+      if(field.army.count + army.count <= 99)
+      {
+         joinUnits(army.count,army.morale,army.party,field._parent,field.army);
+      }
+      else
+      {
+         chng = field.army.count + army.count - 99;
+         joinUnits(99 - field.army.count,army.morale,army.party,field._parent,field.army);
+         joinUnits(chng,army.morale,army.party,field._parent,null,afield);
+      }
+      setArmyRemoval(army,field.army);
+      field.army.moved = true;
+      annexLand(army.party,field);
+      updateBoard(board);
+      return false;
+   }
+   field.army = army;
+   annexLand(army.party,field);
+   updateBoard(board);
+   return true;
+};
+_global.deleteArmy = function(army)
+{
+   if(army.field.army == army)
+   {
+      army.field.army = null;
+   }
+   if(army.is_waiting)
+   {
+      deleteArmy(army.is_waiting);
+   }
+   removeMovieClip(army);
+};
+_global.getMovableArmies = function(party, board)
+{
+   var _loc4_ = new Array();
+   var _loc1_ = 0;
+   while(_loc1_ < board.hw_parties_armies[party].length)
+   {
+      if(!board.hw_parties_armies[party][_loc1_].moved)
+      {
+         _loc4_.push(board.hw_parties_armies[party][_loc1_]);
+      }
+      _loc1_ = _loc1_ + 1;
+   }
+   return _loc4_;
+};
+_global.checkPartyState = function(party, board)
+{
+   if(board.hw_init)
+   {
+      board.hw_parties_status[party] = -1;
+      return undefined;
+   }
+   var _loc4_ = new Array();
+   board.hw_parties_provinces_cp[party] = null;
+   var _loc1_ = 0;
+   while(_loc1_ < board.hw_parties_count)
+   {
+      if(board.hw_parties_capitals[_loc1_].party == party && _loc1_ != party && !board.hw_parties_armies[_loc1_].length)
+      {
+         _loc4_.push(board.hw_parties_capitals[_loc1_]);
+      }
+      _loc1_ = _loc1_ + 1;
+   }
+   if(board.hw_parties_capitals[party].party != party)
+   {
+      board.hw_parties_status[party] = 0;
+   }
+   else if(_loc4_.length)
+   {
+      board.hw_parties_status[party] = 1 + _loc4_.length;
+      board.hw_parties_provinces_cp[party] = _loc4_;
+   }
+   else
+   {
+      board.hw_parties_status[party] = 1;
+   }
+};
+_global.updateBoard = function(board)
+{
+   listArmies(board);
+   var _loc5_ = 0;
+   while(_loc5_ < board.hw_parties_count)
+   {
+      checkPartyState(_loc5_,board);
+      _loc5_ = _loc5_ + 1;
+   }
+   board.hw_parties_towns = new Array(new Array(),new Array(),new Array(),new Array());
+   board.hw_parties_ports = new Array(new Array(),new Array(),new Array(),new Array());
+   board.hw_parties_lands = new Array(new Array(),new Array(),new Array(),new Array());
+   var _loc8_ = 0;
+   while(_loc8_ < board.hw_xmax)
+   {
+      var _loc6_ = 0;
+      while(_loc6_ < board.hw_ymax)
+      {
+         var _loc2_ = getField(_loc8_,_loc6_,board);
+         var _loc4_ = _loc2_.party;
+         updateField(_loc2_);
+         if(board.hw_parties_status[getFieldParty(_loc2_)] == 0)
+         {
+            _loc2_.party = board.hw_parties_capitals[_loc2_.party].party;
+            if(_loc2_.army)
+            {
+               setExplosion(_loc2_.army,_loc2_.army,null);
+            }
+         }
+         if(_loc4_ >= 0)
+         {
+            if(_loc2_.estate == "town")
+            {
+               board.hw_parties_towns[_loc4_].push(_loc2_);
+            }
+            else if(_loc2_.estate == "port")
+            {
+               board.hw_parties_ports[_loc4_].push(_loc2_);
+            }
+            else
+            {
+               board.hw_parties_lands[_loc4_].push(_loc2_);
+            }
+         }
+         _loc6_ = _loc6_ + 1;
+      }
+      _loc8_ = _loc8_ + 1;
+   }
+   _loc5_ = 0;
+   while(_loc5_ < board.hw_parties_count)
+   {
+      var _loc7_ = 0;
+      if(board.hw_parties_armies[_loc5_].length)
+      {
+         var _loc3_ = 0;
+         while(_loc3_ < board.hw_parties_armies[_loc5_].length)
+         {
+            if(board.hw_parties_armies[_loc5_][_loc3_].morale < Math.floor(board.hw_parties_total_count[_loc5_] / 50))
+            {
+               board.hw_parties_armies[_loc5_][_loc3_].morale = Math.floor(board.hw_parties_total_count[_loc5_] / 50);
+               if(board.hw_parties_armies[_loc5_][_loc3_].morale > board.hw_parties_armies[_loc5_][_loc3_].count)
+               {
+                  board.hw_parties_armies[_loc5_][_loc3_].morale = board.hw_parties_armies[_loc5_][_loc3_].count;
+               }
+            }
+            _loc7_ = _loc7_ + board.hw_parties_armies[_loc5_][_loc3_].morale;
+            _loc3_ = _loc3_ + 1;
+         }
+         _loc7_ = _loc7_ / board.hw_parties_armies[_loc5_].length;
+      }
+      else
+      {
+         _loc7_ = 10;
+      }
+      board.hw_parties_morale[_loc5_] = Math.floor(_loc7_);
+      _loc5_ = _loc5_ + 1;
+   }
+   var _loc10_ = board.hw_parties_morale[board.human] + board.hw_parties_total_count[board.human];
+   var _loc9_ = 1;
+   _loc5_ = 0;
+   while(_loc5_ < board.hw_parties_count)
+   {
+      if(_loc5_ != board.human && board.hw_parties_status[_loc5_])
+      {
+         if(_loc10_ < 0.3 * (board.hw_parties_morale[_loc5_] + board.hw_parties_total_count[_loc5_]))
+         {
+            _loc9_ = 3;
+         }
+         else if(_loc9_ < 3 && _loc10_ < 0.6 * (board.hw_parties_morale[_loc5_] + board.hw_parties_total_count[_loc5_]))
+         {
+            _loc9_ = 2;
+         }
+         else if(board.hw_parties_provinces_cp[board.human] && board.hw_parties_provinces_cp[board.human].length >= 2 && _loc10_ > 2 * (board.hw_parties_morale[_loc5_] + board.hw_parties_total_count[_loc5_]))
+         {
+            _loc9_ = 0;
+         }
+      }
+      _loc5_ = _loc5_ + 1;
+   }
+   board.human_condition = _loc9_;
+};
+_global.cleanupTurn = function(board)
+{
+   var _loc2_ = 0;
+   while(_loc2_ < board.hw_parties_armies[board.turn_party].length)
+   {
+      if(board.hw_parties_armies[board.turn_party][_loc2_].moved)
+      {
+         board.hw_parties_armies[board.turn_party][_loc2_].moved = false;
+      }
+      else
+      {
+         board.hw_parties_armies[board.turn_party][_loc2_].morale = board.hw_parties_armies[board.turn_party][_loc2_].morale - 1;
+      }
+      _loc2_ = _loc2_ + 1;
+   }
+};
+_global.hereIsTheNews = function(board)
+{
+   if(board.news == "")
+   {
+      if(board.lh_area > board.hw_parties_lands[board.human].length)
+      {
+         board.news = "retreat";
+      }
+      else if(board.lh_area < board.hw_parties_lands[board.human].length)
+      {
+         board.news = "advance";
+      }
+      else if(board.human_condition == 0)
+      {
+         board.news = "victory_close";
+      }
+      else if(board.human_condition == 3)
+      {
+         board.news = "not_end";
+      }
+      else
+      {
+         board.news = "marika";
+      }
+   }
+   if(board.hw_pact_just_broken >= 0)
+   {
+      board.news = "pact_broken";
+      board.subject = board.hw_pact_just_broken;
+      board.hw_pact_just_broken = -1;
+   }
+   switch(board.news)
+   {
+      case "pact_broken":
+         board.frame.contents.title = "" + board.hw_parties_names[board.subject] + " broken!";
+         break;
+      case "province_conquered":
+         board.frame.contents.title = "" + board.hw_parties_names[board.subject.capital] + " on knees!";
+         board.frame.contents.alt_title = "Long live " + board.hw_parties_names[board.human] + "!";
+         break;
+      case "town_annexed":
+         board.frame.contents.title = "" + board.subject.town_name + " annexed!";
+         break;
+      case "town_captured":
+         board.frame.contents.title = "" + board.subject.town_name + " captured!";
+         break;
+      case "town_lost":
+         board.frame.contents.title = "" + board.subject.town_name + " lost.";
+         break;
+      case "advance":
+         board.frame.contents.title = "" + board.hw_parties_names[board.human] + " forces advance!";
+         break;
+      case "retreat":
+   }
+   board.frame.contents.gotoAndStop(board.news);
+};
+_global.signPact = function(party_a, board)
+{
+   if(board.human_condition > 1)
+   {
+      return false;
+   }
+   board.hw_peace = party_a;
+   return true;
+};
+_global.calcNeighboursInfo = function(party, field)
+{
+   var _loc6_ = 0;
+   var _loc7_ = 0;
+   var _loc5_ = 0;
+   var _loc4_ = false;
+   var _loc2_ = getFurtherNeighbours(field);
+   field.push.field;
+   var _loc1_ = 0;
+   while(_loc1_ < _loc2_.length)
+   {
+      if(_loc2_[_loc1_].army && _loc2_[_loc1_].army.party == party)
+      {
+         _loc6_ = _loc6_ + (_loc2_[_loc1_].army.count + _loc2_[_loc1_].army.morale);
+         _loc7_ = _loc7_ + 1;
+      }
+      if(_loc2_[_loc1_].type == field.type && (_loc2_[_loc1_].party == party || _loc2_[_loc1_].party < 0))
+      {
+         _loc5_ = _loc5_ + 1;
+      }
+      if(_loc2_[_loc1_].wait_for_support)
+      {
+         _loc4_ = true;
+      }
+      _loc1_ = _loc1_ + 1;
+   }
+   return {power:_loc6_,count:_loc7_,non_enemy_land:_loc5_,wait_for_support:_loc4_};
+};
+_global.calcEnemyNeighboursPower = function(party, field)
+{
+   var _loc2_ = getFurtherNeighbours(field);
+   var _loc3_ = 0;
+   field.push.field;
+   var _loc1_ = 0;
+   while(_loc1_ < _loc2_.length)
+   {
+      if(_loc2_[_loc1_].army && _loc2_[_loc1_].army.party != party)
+      {
+         _loc3_ = _loc3_ + (_loc2_[_loc1_].army.count + _loc2_[_loc1_].army.morale);
+      }
+      _loc1_ = _loc1_ + 1;
+   }
+   return _loc3_;
+};
+_global.calcAIHelpers = function(i, y, board)
+{
+   var _loc5_ = 0;
+   while(_loc5_ < board.hw_xmax)
+   {
+      var _loc2_ = getField(_loc5_,y,board);
+      _loc2_.profitability[i] = - findPath(_loc2_,board.hw_parties_capitals[i],null,true).length;
+      var _loc3_ = getFurtherNeighbours(_loc2_);
+      _loc3_.push(_loc2_);
+      var _loc1_ = 0;
+      while(_loc1_ < _loc3_.length)
+      {
+         if(_loc3_[_loc1_].capital == i)
+         {
+            _loc2_.n_capital[i] = true;
+         }
+         if(_loc3_[_loc1_].estate == "town")
+         {
+            _loc2_.n_town = true;
+         }
+         _loc1_ = _loc1_ + 1;
+      }
+      _loc5_ = _loc5_ + 1;
+   }
+};
+_global.raging = function(party, field, board)
+{
+   return field.party == board.human && board.hw_parties_total_power[party] > 1.2 * board.hw_parties_total_power[board.human];
+};
+_global.calcArmiesProfitability = function(party, board)
+{
+   function finalProfitability(field, army)
+   {
+      var _loc5_ = -10000000;
+      var _loc7_ = false;
+      var _loc2_ = 0;
+      while(_loc2_ < board.hw_parties_count)
+      {
+         if(_loc2_ != party)
+         {
+            var _loc3_ = 0;
+            if(board.hw_parties_capitals[_loc2_].party == board.hw_parties_capitals[_loc2_].capital)
+            {
+               _loc3_ = field.profitability[_loc2_];
+               if(board.hw_parties_control[_loc2_] == "human")
+               {
+                  _loc3_ = _loc3_ + _root.difficulty * 2;
+               }
+            }
+            if(board.hw_peace == party && _loc2_ == board.human && !board.duel)
+            {
+               _loc3_ = _loc3_ - 500;
+            }
+            if(_loc5_ < _loc3_)
+            {
+               _loc5_ = _loc3_;
+            }
+         }
+         _loc2_ = _loc2_ + 1;
+      }
+      if(board.hw_peace == party && board.human == field.party && !board.duel)
+      {
+         _loc5_ = _loc5_ - 500;
+      }
+      if(field.type == "land" && field.party != party)
+      {
+         if(field.capital >= 0 && field.capital == field.party && army.count + army.morale > field.army.count + field.army.morale)
+         {
+            _loc5_ = _loc5_ + 1000000;
+            _loc7_ = true;
+         }
+         else if(field.capital >= 0)
+         {
+            _loc5_ = _loc5_ + 20;
+         }
+         else if(field.estate == "town")
+         {
+            _loc5_ = _loc5_ + 5;
+         }
+         else if(field.estate == "port")
+         {
+            _loc5_ = _loc5_ + 3;
+         }
+         else if(field.n_town)
+         {
+            _loc5_ = _loc5_ + 3;
+         }
+      }
+      if(field.army && field.army.party != party)
+      {
+         if(field.n_capital[party])
+         {
+            _loc5_ = _loc5_ + 1000;
+         }
+         if(field.army.party != board.human && board.hw_parties_total_power[field.party] > 1.5 * board.hw_parties_total_power[party] && field.army.count + field.army.morale > army.count + army.morale && (field.party < 2 && party < 2 || field.party > 1 && party > 1))
+         {
+            _loc5_ = _loc5_ + 200;
+         }
+         if(_root.difficulty > 5 && field.army.party != board.human)
+         {
+            _loc5_ = _loc5_ - 250;
+         }
+      }
+      if(field.army && field.army.party == party)
+      {
+         if(field.army.count > army.count && field.army.count < 70)
+         {
+            _loc5_ = _loc5_ + 2;
+         }
+      }
+      if(army.field.capital == party && !field.army && board.turns < 5)
+      {
+         _loc5_ = _loc5_ + 50;
+      }
+      var _loc8_ = calcNeighboursInfo(party,field);
+      var _loc9_ = calcEnemyNeighboursPower(party,field);
+      if((_loc8_.power < _loc9_ && _loc8_.power < 300 || army.count + army.morale < field.army.count + field.army.morale && army.count < 90) && !field.n_capital[party] && !_loc7_)
+      {
+         if(board.hw_parties_wait_for_support_field[party] == field)
+         {
+            if(board.hw_parties_wait_for_support_count[party] < 5)
+            {
+               field.wait_for_support = true;
+            }
+            else
+            {
+               _loc5_ = _loc5_ - 5;
+            }
+         }
+         else
+         {
+            field.wait_for_support = true;
+         }
+      }
+      return _loc5_;
+   }
+   function orderMoves(a, b)
+   {
+      var _loc2_ = a.tmp_prof;
+      var _loc1_ = b.tmp_prof;
+      if(_loc2_ > _loc1_)
+      {
+         return -1;
+      }
+      if(_loc2_ < _loc1_)
+      {
+         return 1;
+      }
+      return 0;
+   }
+   function findBestMoveVal(army)
+   {
+      var _loc2_ = getPossibleMoves(army.field,true,false);
+      var _loc1_ = 0;
+      while(_loc1_ < _loc2_.length)
+      {
+         _loc2_[_loc1_].wait_for_support = false;
+         _loc2_[_loc1_].tmp_prof = finalProfitability(_loc2_[_loc1_],army);
+         _loc1_ = _loc1_ + 1;
+      }
+      _loc2_.sort(orderMoves);
+      return _loc2_[0];
+   }
+   var _loc3_ = getMovableArmies(party,board);
+   var _loc2_ = 0;
+   while(_loc2_ < _loc3_.length)
+   {
+      _loc3_[_loc2_].move = findBestMoveVal(_loc3_[_loc2_]);
+      _loc3_[_loc2_].profitability = _loc3_[_loc2_].move.tmp_prof;
+      if(_loc3_[_loc2_].field.capital == _loc3_[_loc2_].party && board.turns > 5)
+      {
+         _loc3_[_loc2_].profitability = _loc3_[_loc2_].profitability - 1000;
+      }
+      _loc2_ = _loc2_ + 1;
+   }
+   return _loc3_;
+};
+_global.supportArmy = function(party, army, field)
+{
+   function orderMoves(a, b)
+   {
+      var _loc2_ = a.tmp_prof;
+      var _loc1_ = b.tmp_prof;
+      if(_loc2_ > _loc1_)
+      {
+         return -1;
+      }
+      if(_loc2_ < _loc1_)
+      {
+         return 1;
+      }
+      return 0;
+   }
+   function findBestMoveVal(army)
+   {
+      var _loc2_ = getPossibleMoves(army.field,true,false);
+      var _loc3_ = new Array();
+      var _loc1_ = 0;
+      while(_loc1_ < _loc2_.length)
+      {
+         if(_loc2_[_loc1_] != field && (!_loc2_[_loc1_].army || _loc2_[_loc1_].army.party < 0 || _loc2_[_loc1_].army.party == party))
+         {
+            _loc2_[_loc1_].tmp_prof = - getDistance(_loc2_[_loc1_],field);
+            _loc3_.push(_loc2_[_loc1_]);
+         }
+         _loc1_ = _loc1_ + 1;
+      }
+      _loc3_.sort(orderMoves);
+      return _loc3_[0];
+   }
+   board = field._parent;
+   var _loc2_ = getMovableArmies(party,board);
+   var _loc5_ = new Array();
+   var _loc1_ = 0;
+   while(_loc1_ < _loc2_.length)
+   {
+      if(_loc2_[_loc1_] != army && _loc2_[_loc1_].field.capital != party)
+      {
+         _loc2_[_loc1_].move = findBestMoveVal(_loc2_[_loc1_]);
+         _loc2_[_loc1_].profitability = _loc2_[_loc1_].move.tmp_prof;
+         if(_loc2_[_loc1_].move != field && (!_loc2_[_loc1_].move.army || _loc2_[_loc1_].move.army.party < 0 || _loc2_[_loc1_].move.army.party == party))
+         {
+            _loc5_.push(_loc2_[_loc1_]);
+         }
+      }
+      _loc1_ = _loc1_ + 1;
+   }
+   return _loc5_;
+};
+_global.makeMove = function(party, board, init)
+{
+   board.move_points = board.move_points - 1;
+   var _loc1_ = calcArmiesProfitability(party,board);
+   _loc1_.sort(orderArmies);
+   function orderArmies(a, b)
+   {
+      var _loc2_ = a.profitability;
+      var _loc1_ = b.profitability;
+      if(_loc2_ > _loc1_)
+      {
+         return -1;
+      }
+      if(_loc2_ < _loc1_)
+      {
+         return 1;
+      }
+      var _loc4_ = a.count + a.morale;
+      var _loc3_ = b.count + b.morale;
+      if(_loc4_ > _loc3_)
+      {
+         return -1;
+      }
+      if(_loc4_ < _loc3_)
+      {
+         return 1;
+      }
+      return 0;
+   }
+   if(!_loc1_[0].move.wait_for_support)
+   {
+      board.hw_parties_wait_for_support_field[party] = null;
+      board.hw_parties_wait_for_support_count[party] = 0;
+      moveArmy(_loc1_[0],_loc1_[0].move);
+   }
+   else
+   {
+      if(_loc1_[0].move == board.hw_parties_wait_for_support_field[party])
+      {
+         board.hw_parties_wait_for_support_count[party] = board.hw_parties_wait_for_support_count[party] + 1;
+      }
+      else
+      {
+         board.hw_parties_wait_for_support_field[party] = _loc1_[0].move;
+         board.hw_parties_wait_for_support_count[party] = 0;
+      }
+      var _loc4_ = supportArmy(party,_loc1_[0],_loc1_[0].move);
+      if(_loc4_.length > 0)
+      {
+         _loc4_.sort(orderArmies);
+         moveArmy(_loc4_[0],_loc4_[0].move);
+      }
+      else
+      {
+         moveArmy(_loc1_[0],_loc1_[0].move);
+      }
+   }
+};
+var _mochiads_game_id = "e69338cbfae04679";
+var globalsound = new Sound();
+hw_data = SharedObject.getLocal("hw_data");
+if(hw_data.data.show_tutorial == undefined)
+{
+   hw_data.data.show_tutorial = true;
+}
+var map_number = -1;
+var s_happy = createSound("s_happy",100,"happy");
+var s_doom = createSound("s_doom",0,"doom");
+var difficulty = 5;
+stop();
